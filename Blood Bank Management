@@ -1,0 +1,194 @@
+import mysql.connector as sq
+
+#PROGRAM FOR DATABASE CONNECTIVITY
+
+def connect():
+    db=sq.connect(host='localhost',user='root',password='admin')
+    cur=db.cursor()
+    cur.execute("create database IF NOT EXISTS donor11") 
+    cur.execute("use donor11")
+    cur.execute("create table IF NOT EXISTS brecords (did int primary key, dname varchar(20), btype varchar(15), age int, check(age>17))")
+    cur.execute("create table IF NOT EXISTS drecords (did int, hname varchar(20), dov timestamp default current_timestamp, foreign key(did) references brecords(did)on delete cascade)")
+    
+    if db.is_connected==False:
+       print("not connected")
+    return db
+
+
+#PROGRAM FOR ACCESSING BLOOD DONOR RECORD  
+
+def displaybr():
+    con=connect()
+    cur=con.cursor()
+    cur.execute("select * from brecords")
+    data=cur.fetchall()
+    for i in data:
+        did=i[0]
+        dname=i[1]
+        btype=i[2]
+        age=i[3]
+        print ("Donor Id is ", did,  "Donor Name is ", dname,  "Blood Group is ",btype, "Age of Donor is  ",age)
+
+def insertbr():
+    did=int(input("Enter Donor Id-  "))
+    dname=input("Enter Donor Name:-")
+    btype=input("Enter Blood Group")
+    age=int(input("Ener Age of Donor (Age Must be Between 18 and 60 "))
+    con=connect()
+    cur=con.cursor()
+    cur.execute("insert into brecords(did,dname,btype,age)values({},'{}','{}',{})".format(did,dname,btype,age)) 
+    con.commit()        
+def showbr():
+    did=int(input("Enter Donor Id- "))
+    con=connect()
+    cur=con.cursor()
+    cur.execute("select * from brecords where did=%d"%(did))
+    data=cur.fetchall()
+    for i in data:
+        did=i[0]
+        dname=i[1]
+        btype=i[2]
+        age=i[3]
+        print ("Donor Id is ", did,  "Donor Name is ", dname,  "Blood Group is ",btype, "Donor age is ",age)
+def deletebr():
+    try:
+        con=connect()
+        cur=con.cursor()
+        did=int(input("ENTER Donor ID TO BE DELETED:-"))
+        ans=input("ARE YOU SURE YOU WANT TO DELETE(y/n):-")
+        if ans=='y' or ans=='Y':
+            cur.execute("delete from brecords where did=%d"%(did))
+            con.commit()
+    except:
+        print("Record is not deleted from Donor Hospital Records.  Delete record from Donor Hospital Record")
+        
+def updatebr():
+    con=connect()
+    cur=con.cursor()
+    did=int(input("Enter Donor ID To be Updtated " ))
+    cur.execute("select * from brecords where did=%d"%(did))
+    data1=cur.fetchall()
+    for i in data1:
+        did=i[0]
+        dname=i[1]
+        btype=i[2]
+        age=i[3]
+        print ("Donor Id is ", did,  "Donor Name is ", dname,  "Blood Group is ",btype, "Age of Donor is ",age)
+        btype1=input("Enter Changed Blood Group  ")
+        cur.execute("update brecords set btype='%s' where did=%d"%(btype1,did))
+        con.commit()
+               
+def displaydr():
+    con=connect()
+    cur=con.cursor()
+    cur.execute("select * from drecords")
+    data=cur.fetchall()
+    for i in data:
+        did=i[0]
+        hname=i[1]
+        dov=i[2]
+        print("Donor Id is ", did, "Hospital Name is ", hname, "Date of Blood Donation is ",dov)
+def insertdr():
+    try:
+        did=int(input("Enter Donor Id "))
+        hname=(input("Enter Hospital Name "))
+        con=connect()
+        cur=con.cursor()
+        cur.execute("insert into drecords(did,hname)values('%d','%s')"%(did,hname)) 
+        con.commit()
+    except:
+        print("Insert Records in Master Table First i.e. Record Not Found in Donor Details")
+def showdr():
+    did=int(input("Enter Donor Id- "))
+    con=connect()
+    cur=con.cursor()
+    cur.execute("select * from drecords where did=%d"%(did))
+
+    #cur.execute("select count(*) from drecords where did=%d"%(did))
+
+    data=cur.fetchall()
+    for i in data:
+        did=i[0]
+        hname=i[1]
+        dov=i[2]
+        print("Donor Id is ", did, "Hospital Name ", hname, "Date of Blood Donation  ",dov)
+def deletedr():
+    try:
+        con=connect()
+        cur=con.cursor()
+        did=int(input("ENTER Donor Id To be Deleted:-"))
+        ans=input("ARE YOU SURE YOU WANT TO DELETE(y/n):-")
+        if ans=='y' or ans=='Y':
+            cur.execute("delete from drecords where did=%d"%(did))
+            con.commit()
+    except:
+        print("Record Not Found")
+                                
+def select():
+    anss='y'
+    print("-----------------------BLOOD GROUP RECORD-------------------------")
+    print("----------------------It is mandatory to enter records in Donor Details  First ")
+    print("1. DONOR DETAILS")
+    print("2. DONOR HOSPITAL DETAILS")
+    ch=int(input("Enter your choice(1-2):-"))
+    if ch==1:
+        print("\nEXISTING RECORDS ARE\n")
+        displaybr()
+        while(anss=='y'):
+            print("\n------------------WELCOME TO DONOR DETAILS-----------------\n")
+            print("a. Insert New Donor Record")
+            print("b. Show Particular Donor Record")
+            print("c. Update Donor Record ")
+            print("d. Delete Donor Record")
+            print("e. Exit")
+            c=input("enter your choice(a-e):-")
+            if c=='a': 
+                insertbr()
+                print("Inserted Records Are")
+                displaybr()
+            elif c=='b':
+                showbr()                
+            elif c=='c':
+                updatebr()
+                print("\nMODIFIED DETAILS ARE:-\n")
+                displaybr()
+            elif c=='d':
+                deletebr()
+                print("\n Now Records ARe:-\n")
+                displaybr()
+            elif c=='e':
+                break
+            else:
+                print("Wrong Choice.........")
+            anss=input("Want to Continue ")
+
+    elif ch==2:
+        ansc='y'
+        print("\nEXISTING RECORDS ARE\n")
+        displaydr()
+        while(ansc=='y'):
+            print("\n------------------WELCOME TO DONOR HOSPITAL MANAGEMENT------------------\n")
+            print("a. Insert New  Record")
+            print("b. Show Particular  Record")
+            print("c. Delete   Record")
+            print("d. Exit")
+            c=input("enter your choice(a-d):-")
+            if c=='a':
+                print("List of Records Available")
+                displaydr()
+                insertdr()
+                print("Inserted Records Are")
+                displaydr()
+            elif c=='b':
+                showdr()                
+            elif c=='c':
+                deletedr()
+                print("\nMODIFIED DETAILS ARE:-\n")
+                displaydr()
+            elif c=='d':
+                break
+            else:
+                print("Wrong Choice.........")
+            ansc=input("Want to Continue ")
+    
+select()
